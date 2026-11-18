@@ -19,6 +19,21 @@ La primera instalación necesita conexión a Internet. Si PowerShell bloquea scr
 
 `start.ps1` sirve el build React y la API desde el mismo puerto. Detén el servidor con Ctrl+C. `setup.ps1` no modifica instalaciones globales: usa `.venv` y `node_modules` locales.
 
+Si los runtimes no están en PATH, también puedes indicar sus rutas. `NodeDirectory` debe contener tanto `node.exe` como `npm.cmd`; se añade al PATH del proceso de instalación, sin cambiar el PATH global. `PythonExecutable` solo es necesario al crear `.venv`:
+
+```powershell
+.\setup.ps1 -PythonExecutable 'C:\ruta\python.exe' -NodeDirectory 'C:\ruta\node'
+```
+
+El instalador reproduce las versiones de `requirements-lock.txt` y `package-lock.json`. En esta laptop se preparó Node.js 24.11.1 dentro de `.cache\tools\node-v24.11.1-win-x64` y un entorno virtual con Python 3.12.14. Para reinstalar y compilar con ese Node local:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\setup.ps1 -NodeDirectory .cache\tools\node-v24.11.1-win-x64
+powershell -ExecutionPolicy Bypass -File .\start.ps1
+```
+
+Estas carpetas locales no se incluyen en Git. El entorno virtual de esta laptop usa el Python incluido con Codex como instalación base; si ese runtime cambia de ubicación, recrea `.venv` indicando una instalación de Python disponible.
+
 ## Desarrollo
 
 Terminal 1, desde la raíz:
