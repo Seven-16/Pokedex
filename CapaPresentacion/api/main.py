@@ -1,4 +1,5 @@
 import os
+import tempfile
 from contextlib import asynccontextmanager
 from pathlib import Path
 import httpx
@@ -14,10 +15,17 @@ from CapaPresentacion.api.routes import router
 ROOT = Path(__file__).resolve().parents[2]
 
 
+def cache_path() -> Path:
+    # Vercel Functions only permit writes in the temporary directory.
+    if os.getenv('VERCEL'):
+        return Path(tempfile.gettempdir()) / 'pokedex' / 'pokeapi.sqlite3'
+    return ROOT / '.cache' / 'pokeapi.sqlite3'
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     async with httpx.AsyncClient(base_url='https://pokeapi.co/api/v2/', timeout=25, follow_redirects=True, headers={'User-Agent': 'Pokedex-Educational/1.0'}) as client:
-        app.state.pokemon_service = PokemonService(PokeAPIRepository(client, ROOT / '.cache' / 'pokeapi.sqlite3'))
+        app.state.pokemon_service = PokemonService(PokeAPIRepository(client, cache_path()))
         yield
 
 

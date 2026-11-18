@@ -4,7 +4,7 @@ import pytest
 from fastapi.testclient import TestClient
 from CapaDatos.pokeapi_repository import PokeAPIRepository, PokemonNotFound, PokeAPIUnavailable
 from CapaNegocio.pokemon_service import PokemonService, normalize
-from CapaPresentacion.api.main import app
+from CapaPresentacion.api.main import app, cache_path
 from CapaPresentacion.api.routes import get_service
 
 
@@ -21,6 +21,16 @@ class Repository:
         if path.startswith('pokemon/'):
             return {'types': [{'type': {'name': 'normal'}}], 'height': 3, 'weight': 40, 'stats': [{'stat': {'name': 'hp'}, 'base_stat': 48}]}
         raise AssertionError(path)
+
+
+def test_vercel_uses_temporary_cache(monkeypatch, tmp_path):
+    monkeypatch.setenv('VERCEL', '1')
+    monkeypatch.setattr('CapaPresentacion.api.main.tempfile.gettempdir', lambda: str(tmp_path))
+    assert cache_path() == tmp_path / 'pokedex' / 'pokeapi.sqlite3'
+    from main import app as vercel_app
+    with TestClient(vercel_app) as client:
+        assert client.get('/api/v1/health').json() == {'status': 'ok'}
+        assert (tmp_path / 'pokedex' / 'pokeapi.sqlite3').exists()
 
 
 @pytest.fixture
