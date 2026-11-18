@@ -6,7 +6,8 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
-from CapaDatos.pokeapi_repository import PokeAPIRepository, PokemonNotFound, PokeAPIUnavailable
+from CapaDatos.pokeapi_repository import PokeAPIRepository
+from CapaNegocio.errors import PokemonNotFound, PokeAPIUnavailable
 from CapaNegocio.pokemon_service import PokemonService
 from CapaPresentacion.api.routes import router
 

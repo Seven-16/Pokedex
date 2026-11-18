@@ -5,8 +5,10 @@ export interface CatalogEntry {
   region: string;
   image: string;
 }
-export interface Pokemon extends CatalogEntry {
+export interface PokemonSummary extends CatalogEntry {
   types: string[];
+}
+export interface Pokemon extends PokemonSummary {
   description: string;
   height: number;
   weight: number;
@@ -16,7 +18,7 @@ export interface PokemonPage {
   total: number;
   offset: number;
   limit: number;
-  results: Pokemon[];
+  results: PokemonSummary[];
 }
 export interface Metadata {
   total: number;

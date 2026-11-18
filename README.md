@@ -57,7 +57,7 @@ Abre http://127.0.0.1:5173. Vite reenvía `/api` a FastAPI. Si el backend está 
 CapaPresentacion/
   frontend/src/          React, controles, animaciones y cliente HTTP
     api.ts               Tipos y cliente de la API propia
-    components.tsx       Carrusel, fichas, carga y diálogo accesible
+    components/          Carrusel, fichas, imágenes, carga y diálogo accesible
     App.tsx              Buscador, filtros, historial y paginación
     styles.css           Diseño adaptable y estados
   api/
@@ -81,6 +81,7 @@ Flujo: **React → REST FastAPI → servicio de negocio → repositorio → Pok�
 | `GET /api/v1/metadata` | Generaciones, regiones y total |
 | `GET /api/v1/catalog` | Índice ligero completo para el carrusel |
 | `GET /api/v1/pokemon` | Búsqueda y paginación |
+| `GET /api/v1/pokemon-summary` | Búsqueda y paginación con los datos necesarios para las tarjetas |
 | `GET /api/v1/pokemon/{nombre-o-id}` | Ficha por nombre exacto o número nacional |
 
 Parámetros de búsqueda: `q` (nombre parcial o número exacto), `region`, `generation`, `offset` (desde 0), `limit` (1–48, por defecto 12). Los filtros se combinan mediante **AND**.
@@ -101,6 +102,7 @@ Respuestas: `200` con resultados (lista vacía si no hay coincidencias), `404` p
 - «Región de origen» no significa todas las regiones donde puede encontrarse un Pokémon. Se deriva de `generation.main_region`, con Hisui para las especies nacionales 899–905 y «Desconocida» para Meltan y Melmetal. Esta política está centralizada en el servicio y documentada para ampliaciones futuras.
 - Se muestran descripciones españolas cuando PokéAPI las ofrece. Si faltan, aparece un texto explícito, sin inventar contenido.
 - Caché de 24 horas en memoria y `.cache/pokeapi.sqlite3`. Solo se solicitan los detalles visibles. La concurrencia externa se limita a 12 y las solicitudes simultáneas al mismo recurso se agrupan.
+- Las tarjetas solicitan solo los tipos; la descripción y las estadísticas se cargan al abrir la ficha. Las ilustraciones oficiales se sirven desde jsDelivr, con GitHub como alternativa si falla el CDN. El navegador guarda las imágenes según las reglas de caché del proveedor.
 - La aplicación necesita Internet para datos no almacenados e imágenes; la caché no pretende ser un modo sin conexión completo.
 
 ## Interacciones y accesibilidad

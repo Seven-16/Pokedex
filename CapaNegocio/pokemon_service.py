@@ -5,8 +5,11 @@ import time
 import unicodedata
 from typing import Protocol
 
-from CapaDatos.pokeapi_repository import PokemonNotFound
-from CapaNegocio.models import CatalogEntry, Generation, Metadata, Pokemon, PokemonPage
+from CapaNegocio.errors import PokemonNotFound
+from CapaNegocio.models import (
+    CatalogEntry, Generation, Metadata, Pokemon, PokemonPage,
+    PokemonSummary, PokemonSummaryPage,
+)
 
 
 class PokemonRepository(Protocol):
@@ -67,10 +70,49 @@ class PokemonService:
         description = next((item['flavor_text'] for item in reversed(species.get('flavor_text_entries', [])) if item['language']['name'] == 'es'), 'Todavía no hay una descripción en español para este Pokémon.')
         return Pokemon(**entry.model_dump(), types=[item['type']['name'] for item in pokemon['types']], description=' '.join(description.split()), height=pokemon['height'] / 10, weight=pokemon['weight'] / 10, stats={item['stat']['name']: item['base_stat'] for item in pokemon['stats']})
 
-    async def search(self, query: str = '', generation: int | None = None, region: str | None = None, offset: int = 0, limit: int = 12) -> PokemonPage:
+    async def _matches(
+        self, query: str, generation: int | None, region: str | None
+    ) -> list[CatalogEntry]:
         entries = await self.catalog()
         term = normalize(query).lstrip('#')
         region = normalize(region) if region else None
-        matches = [item for item in entries if (not term or (term.isdigit() and item.id == int(term)) or (not term.isdigit() and term in normalize(item.name))) and (generation is None or item.generation == generation) and (not region or item.region == region)]
-        results = await asyncio.gather(*(self.detail(item.id) for item in matches[offset:offset + limit]))
+        def matches_query(item: CatalogEntry) -> bool:
+            if not term:
+                return True
+            if term.isdigit():
+                return item.id == int(term)
+            return term in normalize(item.name)
+
+        return [
+            item for item in entries
+            if matches_query(item)
+            and (generation is None or item.generation == generation)
+            and (not region or item.region == region)
+        ]
+
+    async def _summary(self, entry: CatalogEntry) -> PokemonSummary:
+        data = await self.repository.get(f'pokemon/{entry.id}')
+        return PokemonSummary(
+            **entry.model_dump(),
+            types=[item['type']['name'] for item in data['types']],
+        )
+
+    async def search_summaries(
+        self, query: str = '', generation: int | None = None,
+        region: str | None = None, offset: int = 0, limit: int = 12,
+    ) -> PokemonSummaryPage:
+        matches = await self._matches(query, generation, region)
+        results = await asyncio.gather(
+            *(self._summary(item) for item in matches[offset:offset + limit])
+        )
+        return PokemonSummaryPage(total=len(matches), offset=offset, limit=limit, results=results)
+
+    async def search(
+        self, query: str = '', generation: int | None = None,
+        region: str | None = None, offset: int = 0, limit: int = 12,
+    ) -> PokemonPage:
+        matches = await self._matches(query, generation, region)
+        results = await asyncio.gather(
+            *(self.detail(item.id) for item in matches[offset:offset + limit])
+        )
         return PokemonPage(total=len(matches), offset=offset, limit=limit, results=results)

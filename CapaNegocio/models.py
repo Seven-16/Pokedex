@@ -15,8 +15,11 @@ class CatalogEntry(BaseModel):
     image: str
 
 
-class Pokemon(CatalogEntry):
+class PokemonSummary(CatalogEntry):
     types: list[str]
+
+
+class Pokemon(PokemonSummary):
     description: str
     height: float
     weight: float
@@ -28,6 +31,13 @@ class PokemonPage(BaseModel):
     offset: int
     limit: int
     results: list[Pokemon]
+
+
+class PokemonSummaryPage(BaseModel):
+    total: int
+    offset: int
+    limit: int
+    results: list[PokemonSummary]
 
 
 class Metadata(BaseModel):

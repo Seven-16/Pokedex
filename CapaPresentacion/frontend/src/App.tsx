@@ -23,7 +23,7 @@ import {
   roman,
   type CatalogEntry,
   type Metadata,
-  type Pokemon,
+  type PokemonSummary,
   type PokemonPage,
 } from "./api";
 
@@ -37,7 +37,9 @@ function fromURL(): Filters {
       ? params.get("generation")!
       : "",
     region: params.get("region") || "",
-    page: Math.max(1, Math.min(10000, Number(params.get("page")) || 1)),
+    page: /^[1-9]\d*$/.test(params.get("page") || "")
+      ? Math.min(10000, Number(params.get("page")))
+      : 1,
   };
 }
 
@@ -51,7 +53,7 @@ export default function App() {
   const [error, setError] = useState("");
   const [catalogError, setCatalogError] = useState("");
   const [retry, setRetry] = useState(0);
-  const [selected, setSelected] = useState<Pokemon | null>(null);
+  const [selected, setSelected] = useState<PokemonSummary | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const lastFocused = useRef<HTMLElement | null>(null);
   useEffect(() => {
@@ -84,7 +86,7 @@ export default function App() {
     });
     if (filters.generation) params.set("generation", filters.generation);
     if (filters.region) params.set("region", filters.region);
-    request<PokemonPage>(`/pokemon?${params}`, controller.signal)
+    request<PokemonPage>(`/pokemon-summary?${params}`, controller.signal)
       .then(setPage)
       .catch((err) => {
         if (!controller.signal.aborted)
@@ -145,7 +147,7 @@ export default function App() {
     setInput("");
     update({ ...defaults });
   }
-  function open(pokemon: Pokemon) {
+  function open(pokemon: PokemonSummary) {
     lastFocused.current = document.activeElement as HTMLElement;
     setSelected(pokemon);
   }

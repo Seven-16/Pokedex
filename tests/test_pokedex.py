@@ -44,6 +44,31 @@ def test_combined_filters_and_pagination(service):
     asyncio.run(run())
 
 
+def test_summary_only_loads_data_needed_for_cards():
+    class RecordingRepository(Repository):
+        def __init__(self):
+            self.calls = []
+
+        async def get(self, path):
+            self.calls.append(path)
+            return await super().get(path)
+
+    repository = RecordingRepository()
+    service = PokemonService(repository)
+
+    async def run():
+        page = await service.search_summaries(region='kanto', offset=1, limit=1)
+        assert page.total == 3
+        assert page.results[0].id == 25
+        assert page.results[0].types == ['normal']
+        assert 'pokemon/25' in repository.calls
+        assert not any(path.startswith('pokemon-species/') for path in repository.calls)
+        await service.detail(25)
+        assert 'pokemon-species/25' in repository.calls
+
+    asyncio.run(run())
+
+
 def test_detail_and_unknown(service):
     async def run():
         pokemon = await service.detail('132')
@@ -79,6 +104,9 @@ def test_rest_contract(service):
         client = TestClient(app)
         assert client.get('/api/v1/health').json() == {'status': 'ok'}
         assert client.get('/api/v1/pokemon/ditto').json()['id'] == 132
+        summary = client.get('/api/v1/pokemon-summary?q=25').json()
+        assert summary['total'] == 1 and summary['results'][0]['id'] == 25
+        assert 'description' not in summary['results'][0]
         assert client.get('/api/v1/pokemon?region=kanto&generation=8').json()['total'] == 0
         assert len(client.get('/api/v1/catalog').json()) == 5
         assert 'hisui' in client.get('/api/v1/metadata').json()['regions']

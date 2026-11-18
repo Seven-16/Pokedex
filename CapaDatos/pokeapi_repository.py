@@ -7,13 +7,7 @@ from pathlib import Path
 
 import httpx
 
-
-class PokemonNotFound(Exception):
-    pass
-
-
-class PokeAPIUnavailable(Exception):
-    pass
+from CapaNegocio.errors import PokemonNotFound, PokeAPIUnavailable
 
 
 class PokeAPIRepository:
