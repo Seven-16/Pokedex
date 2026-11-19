@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ArrowUpRight, ChevronLeft, ChevronRight, Pause, Play, Shuffle } from "lucide-react";
 import { displayName, number, request, roman, type CatalogEntry, type Pokemon } from "../api";
@@ -13,7 +13,15 @@ export function Carousel({
   onOpen: (pokemon: Pokemon) => void;
 }) {
   const reduced = useReducedMotion();
-  const [index, setIndex] = useState(24);
+  const shuffledEntries = useMemo(() => {
+    const shuffled = [...entries];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  }, [entries]);
+  const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const [hover, setHover] = useState(false);
   const [focused, setFocused] = useState(false);
@@ -21,7 +29,7 @@ export function Carousel({
   const [detail, setDetail] = useState<Pokemon | null>(null);
   const [failed, setFailed] = useState(false);
   const [retry, setRetry] = useState(0);
-  const entry = entries[index % entries.length];
+  const entry = shuffledEntries[index % shuffledEntries.length];
   const currentDetail = detail?.id === entry?.id ? detail : null;
   const playing = !paused && !reduced;
   useEffect(() => {
@@ -77,7 +85,11 @@ export function Carousel({
         <button
           className="shuffle-button"
           onClick={() => {
-            setIndex(Math.floor(Math.random() * entries.length));
+            setIndex((current) => {
+              if (entries.length <= 1) return 0;
+              const offset = 1 + Math.floor(Math.random() * (entries.length - 1));
+              return (current + offset) % entries.length;
+            });
             setPaused(true);
           }}
         >
