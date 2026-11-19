@@ -71,7 +71,7 @@ class PokemonService:
         return Pokemon(**entry.model_dump(), types=[item['type']['name'] for item in pokemon['types']], description=' '.join(description.split()), height=pokemon['height'] / 10, weight=pokemon['weight'] / 10, stats={item['stat']['name']: item['base_stat'] for item in pokemon['stats']})
 
     async def _matches(
-        self, query: str, generation: int | None, region: str | None
+        self, query: str, generation: int | None, region: str | None, pokemon_type: str | None = None
     ) -> list[CatalogEntry]:
         entries = await self.catalog()
         term = normalize(query).lstrip('#')
@@ -83,11 +83,17 @@ class PokemonService:
                 return item.id == int(term)
             return term in normalize(item.name)
 
+        type_ids = None
+        if pokemon_type:
+            data = await self.repository.get(f'type/{pokemon_type}')
+            type_ids = {resource_id(item['pokemon']['url']) for item in data['pokemon']}
+
         return [
             item for item in entries
             if matches_query(item)
             and (generation is None or item.generation == generation)
             and (not region or item.region == region)
+            and (type_ids is None or item.id in type_ids)
         ]
 
     async def _summary(self, entry: CatalogEntry) -> PokemonSummary:
@@ -100,8 +106,9 @@ class PokemonService:
     async def search_summaries(
         self, query: str = '', generation: int | None = None,
         region: str | None = None, offset: int = 0, limit: int = 12,
+        pokemon_type: str | None = None,
     ) -> PokemonSummaryPage:
-        matches = await self._matches(query, generation, region)
+        matches = await self._matches(query, generation, region, pokemon_type)
         results = await asyncio.gather(
             *(self._summary(item) for item in matches[offset:offset + limit])
         )
@@ -110,8 +117,9 @@ class PokemonService:
     async def search(
         self, query: str = '', generation: int | None = None,
         region: str | None = None, offset: int = 0, limit: int = 12,
+        pokemon_type: str | None = None,
     ) -> PokemonPage:
-        matches = await self._matches(query, generation, region)
+        matches = await self._matches(query, generation, region, pokemon_type)
         results = await asyncio.gather(
             *(self.detail(item.id) for item in matches[offset:offset + limit])
         )

@@ -18,6 +18,8 @@ class Repository:
             return {'id': identifier, 'name': f'generation-{identifier}', 'main_region': {'name': 'kanto' if identifier == 1 else 'galar'}, 'pokemon_species': [{'name': name, 'url': f'https://pokeapi.co/api/v2/pokemon-species/{n}/'} for n, name in species]}
         if path.startswith('pokemon-species/'):
             return {'flavor_text_entries': [{'language': {'name': 'es'}, 'flavor_text': 'Texto\n en español.'}]}
+        if path == 'type/grass':
+            return {'pokemon': [{'pokemon': {'url': f'https://pokeapi.co/api/v2/pokemon/{n}/'}} for n in (1, 810, 10001)]}
         if path.startswith('pokemon/'):
             return {'types': [{'type': {'name': 'normal'}}], 'height': 3, 'weight': 40, 'stats': [{'stat': {'name': 'hp'}, 'base_stat': 48}]}
         raise AssertionError(path)
@@ -51,6 +53,15 @@ def test_combined_filters_and_pagination(service):
         assert (await service.search('pikachu', generation=8)).total == 0
         assert [p.id for p in (await service.search(region='hisui')).results] == [899]
         assert [p.id for p in (await service.search(region='galar')).results] == [810]
+    asyncio.run(run())
+
+
+def test_type_filter_combines_before_pagination(service):
+    async def run():
+        page = await service.search_summaries(pokemon_type='grass', offset=1, limit=1)
+        assert page.total == 2 and [p.id for p in page.results] == [810]
+        assert [p.id for p in (await service.search_summaries(region='kanto', pokemon_type='grass')).results] == [1]
+        assert (await service.search_summaries('pikachu', pokemon_type='grass')).total == 0
     asyncio.run(run())
 
 
@@ -118,6 +129,8 @@ def test_rest_contract(service):
         assert summary['total'] == 1 and summary['results'][0]['id'] == 25
         assert 'description' not in summary['results'][0]
         assert client.get('/api/v1/pokemon?region=kanto&generation=8').json()['total'] == 0
+        assert client.get('/api/v1/pokemon-summary?type=grass&generation=1').json()['total'] == 1
+        assert client.get('/api/v1/pokemon-summary?type=invalid').status_code == 422
         assert len(client.get('/api/v1/catalog').json()) == 5
         assert 'hisui' in client.get('/api/v1/metadata').json()['regions']
         assert client.get('/api/v1/pokemon/nope').status_code == 404

@@ -2,6 +2,8 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
   ArrowDown,
   ArrowRight,
+  ChevronDown,
+  Check,
   ChevronLeft,
   ChevronRight,
   RotateCcw,
@@ -21,14 +23,15 @@ import {
   displayName,
   request,
   roman,
+  typeNames,
   type CatalogEntry,
   type Metadata,
   type PokemonSummary,
   type PokemonPage,
 } from "./api";
 
-type Filters = { q: string; generation: string; region: string; page: number };
-const defaults: Filters = { q: "", generation: "", region: "", page: 1 };
+type Filters = { q: string; generation: string; region: string; type: string; page: number };
+const defaults: Filters = { q: "", generation: "", region: "", type: "", page: 1 };
 function fromURL(): Filters {
   const params = new URLSearchParams(location.search);
   return {
@@ -37,6 +40,7 @@ function fromURL(): Filters {
       ? params.get("generation")!
       : "",
     region: params.get("region") || "",
+    type: Object.hasOwn(typeNames, params.get("type") || "") ? params.get("type")! : "",
     page: /^[1-9]\d*$/.test(params.get("page") || "")
       ? Math.min(10000, Number(params.get("page")))
       : 1,
@@ -86,6 +90,7 @@ export default function App() {
     });
     if (filters.generation) params.set("generation", filters.generation);
     if (filters.region) params.set("region", filters.region);
+    if (filters.type) params.set("type", filters.type);
     request<PokemonPage>(`/pokemon-summary?${params}`, controller.signal)
       .then(setPage)
       .catch((err) => {
@@ -132,6 +137,7 @@ export default function App() {
     if (next.q) params.set("q", next.q);
     if (next.generation) params.set("generation", next.generation);
     if (next.region) params.set("region", next.region);
+    if (next.type) params.set("type", next.type);
     if (next.page > 1) params.set("page", String(next.page));
     history.pushState(
       null,
@@ -155,7 +161,7 @@ export default function App() {
     setSelected(null);
     requestAnimationFrame(() => lastFocused.current?.focus());
   }
-  const active = !!(filters.q || filters.generation || filters.region);
+  const active = !!(filters.q || filters.generation || filters.region || filters.type);
   const pages = Math.max(1, Math.ceil((page?.total || 0) / 12));
   return (
     <>
@@ -285,48 +291,15 @@ export default function App() {
                   <SlidersHorizontal size={17} />
                   Filtrar por
                 </span>
-                <label>
-                  <span>Región de origen</span>
-                  <select
-                    aria-label="Región de origen"
-                    name="region"
-                    value={filters.region}
-                    disabled={!metadata}
-                    onChange={(e) =>
-                      update({ ...filters, region: e.target.value, page: 1 })
-                    }
-                  >
-                    <option value="">Todas las regiones</option>
-                    {metadata?.regions.map((region) => (
-                      <option value={region} key={region}>
-                        {displayName(region)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  <span>Generación</span>
-                  <select
-                    aria-label="Generación"
-                    name="generation"
-                    value={filters.generation}
-                    disabled={!metadata}
-                    onChange={(e) =>
-                      update({
-                        ...filters,
-                        generation: e.target.value,
-                        page: 1,
-                      })
-                    }
-                  >
-                    <option value="">Todas las generaciones</option>
-                    {metadata?.generations.map((g) => (
-                      <option value={g.id} key={g.id}>
-                        Generación {roman(g.id)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                <FilterMenu label="Región de origen" value={filters.region} disabled={!metadata}
+                  options={[{ value: "", label: "Todas las regiones" }, ...(metadata?.regions.map((region) => ({ value: region, label: displayName(region) })) || [])]}
+                  onChange={(region) => update({ ...filters, region, page: 1 })} />
+                <FilterMenu label="Generación" value={filters.generation} disabled={!metadata}
+                  options={[{ value: "", label: "Todas las generaciones" }, ...(metadata?.generations.map((g) => ({ value: String(g.id), label: `Generación ${roman(g.id)}` })) || [])]}
+                  onChange={(generation) => update({ ...filters, generation, page: 1 })} />
+                <FilterMenu label="Tipo" value={filters.type} typeMenu
+                  options={[{ value: "", label: "Todos los tipos" }, ...Object.entries(typeNames).map(([value, label]) => ({ value, label }))]}
+                  onChange={(type) => update({ ...filters, type, page: 1 })} />
                 {active && (
                   <button
                     className="reset-button"
@@ -464,4 +437,32 @@ export default function App() {
 }
 function ArrowUpRightIcon() {
   return <ArrowRight className="external-arrow" size={13} />;
+}
+
+function FilterMenu({ label, value, options, onChange, disabled = false, typeMenu = false }: {
+  label: string; value: string; options: { value: string; label: string }[];
+  onChange: (value: string) => void; disabled?: boolean; typeMenu?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const root = useRef<HTMLDivElement>(null);
+  const trigger = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const outside = (event: PointerEvent) => { if (!root.current?.contains(event.target as Node)) setOpen(false); };
+    const escape = (event: KeyboardEvent) => { if (event.key === "Escape") { setOpen(false); trigger.current?.focus(); } };
+    document.addEventListener("pointerdown", outside);
+    document.addEventListener("keydown", escape);
+    return () => { document.removeEventListener("pointerdown", outside); document.removeEventListener("keydown", escape); };
+  }, [open]);
+  return <div className={`filter-control ${typeMenu ? "filter-control-type" : ""}`} ref={root}>
+    <span className="filter-label">{label}</span>
+    <button ref={trigger} type="button" className="filter-trigger" disabled={disabled} aria-label={`${label}: ${options.find((option) => option.value === value)?.label || label}`} aria-expanded={open} onClick={() => setOpen(!open)}>
+      <span>{options.find((option) => option.value === value)?.label || label}</span><ChevronDown size={15} className={open ? "chevron-open" : ""} />
+    </button>
+    {open && <div className={`filter-menu ${typeMenu ? "type-menu" : ""}`} aria-label={label} role="group">
+      {options.map((option) => <button type="button" key={option.value} className={`filter-option ${typeMenu && option.value ? `type-option type-${option.value}` : ""} ${option.value === value ? "is-selected" : ""}`} aria-pressed={option.value === value} onClick={() => { onChange(option.value); setOpen(false); trigger.current?.focus(); }}>
+        {typeMenu && option.value && <i aria-hidden="true" />}<span>{option.label}</span>{option.value === value && <Check size={15} aria-hidden="true" />}
+      </button>)}
+    </div>}
+  </div>;
 }
