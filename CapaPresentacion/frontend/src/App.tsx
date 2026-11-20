@@ -6,6 +6,8 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
+  Mail,
+  Phone,
   RotateCcw,
   Search,
   SlidersHorizontal,
@@ -408,14 +410,40 @@ export default function App() {
             )}
           </div>
         </section>
+        <section id="sobre" className="about-section" aria-labelledby="about-title">
+          <div className="layout about-layout">
+            <div className="about-intro">
+              <h2 id="about-title">Detrás de esta Pokédex<span>.</span></h2>
+              <p>Un mini proyecto personal que le di mucho cariño.</p>
+            </div>
+            <article className="creator-card">
+              <div className="creator-portrait-wrap">
+                <div className="creator-portrait">
+                  <img src="/aaron-carmona.jpeg" alt="Retrato de Aarón Carmona" loading="lazy" />
+                </div>
+                <span className="creator-mark" aria-hidden="true"><Pokeball /></span>
+              </div>
+              <div className="creator-content">
+                <span className="creator-role">Creador de esta Pokédex</span>
+                <h3>Aarón Carmona<span>.</span></h3>
+                <p>¡Hola! Soy Aarón, y esta es mi pokédex. Gracias por visualizar mi arte!</p>
+                <div className="creator-contact" aria-label="Datos de contacto">
+                  <a href="mailto:carmaar1216@gmail.com"><Mail size={18} aria-hidden="true" /><span><small>Correo</small>carmaar1216@gmail.com</span><ArrowUpRightIcon /></a>
+                  <a href="tel:+18299933365"><Phone size={18} aria-hidden="true" /><span><small>Teléfono</small>1 (829)-993-3365</span><ArrowUpRightIcon /></a>
+                </div>
+              </div>
+            </article>
+          </div>
+        </section>
       </main>
-      <footer id="sobre" className="layout">
+      <footer className="layout">
         <div>
           <a className="brand" href="/">
             <Pokeball />
             <span>pokédex.</span>
           </a>
           <p>Una pequeña enciclopedia para una gran aventura.</p>
+          <p className="creator-signature">Creado por <a href="https://seven-16.github.io/portafolio/">Aarón Carmona</a></p>
         </div>
         <div className="footer-details">
           <p>
