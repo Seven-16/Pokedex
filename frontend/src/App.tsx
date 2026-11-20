@@ -134,6 +134,11 @@ export default function App() {
     return () => window.removeEventListener("keydown", key);
   }, [selected]);
   function update(next: Filters) {
+    if (
+      next.q === filters.q && next.generation === filters.generation &&
+      next.region === filters.region && next.type === filters.type &&
+      next.page === filters.page
+    ) return;
     setFilters(next);
     const params = new URLSearchParams();
     if (next.q) params.set("q", next.q);
