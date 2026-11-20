@@ -5,8 +5,8 @@ import time
 import unicodedata
 from typing import Protocol
 
-from CapaNegocio.errors import PokemonNotFound
-from CapaNegocio.models import (
+from backend.negocios.errors import PokemonNotFound
+from backend.negocios.models import (
     CatalogEntry, Generation, Metadata, Pokemon, PokemonPage,
     PokemonSummary, PokemonSummaryPage,
 )

@@ -7,7 +7,7 @@ React con TypeScript y FastAPI con Python. Arquitectura multicapas solicitada.
 ## Product Purpose
 Explorar todos los Pokémon del catálogo nacional y buscar por nombre, número, región y generación usando PokéAPI.
 ## Capabilities and Constraints
-Carrusel de imágenes automático con controles, imagen, nombre, tipos, generación y región. Pantalla de carga con Poké Ball animada. Carpetas existentes CapaDatos, CapaNegocio y CapaPresentacion. Desarrollo local en Windows.
+Carrusel de imágenes automático con controles, imagen, nombre, tipos, generación y región. Pantalla de carga con Poké Ball animada. Arquitectura por capas en backend y frontend. Desarrollo local en Windows.
 ## Brand Commitments
 Rojo y blanco característicos de la Poké Ball. Animaciones de interfaz, búsqueda y carga.
 ## Users

@@ -25,7 +25,7 @@ if (-not (Test-Path -LiteralPath '.venv\Scripts\python.exe')) {
 }
 & '.\.venv\Scripts\python.exe' -m pip install -r requirements-lock.txt
 if ($LASTEXITCODE -ne 0) { throw 'No se pudieron instalar las dependencias de Python.' }
-Push-Location 'CapaPresentacion\frontend'
+Push-Location 'frontend'
 try {
     if (Test-Path package-lock.json) { npm.cmd ci } else { npm.cmd install }
     if ($LASTEXITCODE -ne 0) { throw 'No se pudieron instalar las dependencias de React.' }

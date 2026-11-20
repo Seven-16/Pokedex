@@ -45,28 +45,28 @@ Terminal 1, desde la raíz:
 Terminal 2:
 
 ```powershell
-cd CapaPresentacion\frontend
+cd frontend
 npm run dev
 ```
 
-Abre http://127.0.0.1:5173. Vite reenvía `/api` a FastAPI. Si el backend está en otro servidor, define `VITE_API_URL` en `CapaPresentacion/frontend/.env` antes de compilar, por ejemplo `VITE_API_URL=https://tu-servidor/api/v1`. En ese backend configura `CORS_ORIGINS` con los orígenes permitidos separados por comas.
+Abre http://127.0.0.1:5173. Vite reenvía `/api` a FastAPI. Si el backend está en otro servidor, define `VITE_API_URL` en `frontend/.env` antes de compilar, por ejemplo `VITE_API_URL=https://tu-servidor/api/v1`. En ese backend configura `CORS_ORIGINS` con los orígenes permitidos separados por comas.
 
 ## Arquitectura multicapas
 
 ```text
-CapaPresentacion/
-  frontend/src/          React, controles, animaciones y cliente HTTP
+frontend/src/            React, controles, animaciones y cliente HTTP
     api.ts               Tipos y cliente de la API propia
     components/          Carrusel, fichas, imágenes, carga y diálogo accesible
     App.tsx              Buscador, filtros, historial y paginación
     styles.css           Diseño adaptable y estados
+backend/
   api/
     routes.py            Endpoints, validación y dependencia del servicio
     main.py              Composición, ciclo de vida, CORS y errores HTTP
-CapaNegocio/
+  negocios/
   pokemon_service.py     Búsqueda, origen, catálogo y composición de fichas
   models.py              Contratos de datos tipados con Pydantic
-CapaDatos/
+  datos/
   pokeapi_repository.py  HTTP a PokéAPI, concurrencia y caché SQLite
 tests/                   Pruebas sin depender de la API externa
 ```
@@ -117,7 +117,7 @@ Bibliotecas: **Motion**, **Radix UI**, **Lucide React** y **Outfit** autoalojada
 
 ```powershell
 .\.venv\Scripts\python.exe -m pytest -q
-cd CapaPresentacion\frontend
+cd frontend
 npm run build
 npm audit --omit=dev
 ```

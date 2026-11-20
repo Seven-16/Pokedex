@@ -1,7 +1,7 @@
 from typing import Annotated, Literal
 from fastapi import APIRouter, Depends, Query, Request
-from CapaNegocio.models import CatalogEntry, Metadata, Pokemon, PokemonPage, PokemonSummaryPage
-from CapaNegocio.pokemon_service import PokemonService
+from backend.negocios.models import CatalogEntry, Metadata, Pokemon, PokemonPage, PokemonSummaryPage
+from backend.negocios.pokemon_service import PokemonService
 
 router = APIRouter(prefix='/api/v1', tags=['Pokédex'])
 

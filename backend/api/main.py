@@ -7,10 +7,10 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
-from CapaDatos.pokeapi_repository import PokeAPIRepository
-from CapaNegocio.errors import PokemonNotFound, PokeAPIUnavailable
-from CapaNegocio.pokemon_service import PokemonService
-from CapaPresentacion.api.routes import router
+from backend.datos.pokeapi_repository import PokeAPIRepository
+from backend.negocios.errors import PokemonNotFound, PokeAPIUnavailable
+from backend.negocios.pokemon_service import PokemonService
+from backend.api.routes import router
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -44,6 +44,6 @@ async def unavailable(request: Request, exc: PokeAPIUnavailable):
 
 
 app.include_router(router)
-frontend = ROOT / 'CapaPresentacion' / 'frontend' / 'dist'
+frontend = ROOT / 'frontend' / 'dist'
 if frontend.is_dir():
     app.mount('/', StaticFiles(directory=frontend, html=True), name='frontend')
