@@ -4,7 +4,7 @@ import pytest
 from fastapi.testclient import TestClient
 from backend.datos.pokeapi_repository import PokeAPIRepository, PokemonNotFound, PokeAPIUnavailable
 from backend.negocios.pokemon_service import PokemonService, normalize
-from backend.api.main import app, cache_path
+from backend.api.main import app, cache_path, cors_origins
 from backend.api.routes import get_service
 
 
@@ -115,6 +115,27 @@ def test_api_upstream_failure():
         assert response.status_code == 503
         assert response.headers['retry-after'] == '5'
         assert 'Inténtalo' in response.json()['detail']
+    finally:
+        app.dependency_overrides.clear()
+
+
+def test_cors_rejects_wildcard_and_trims_origins(monkeypatch):
+    monkeypatch.setenv('CORS_ORIGINS', ' https://example.com , http://localhost:5173 ')
+    assert cors_origins() == ['https://example.com', 'http://localhost:5173']
+    monkeypatch.setenv('CORS_ORIGINS', '*')
+    with pytest.raises(ValueError):
+        cors_origins()
+
+
+def test_upstream_error_hides_internal_details():
+    class Unavailable:
+        async def search(self, *args):
+            raise PokeAPIUnavailable('internal diagnostics')
+    app.dependency_overrides[get_service] = lambda: Unavailable()
+    try:
+        response = TestClient(app).get('/api/v1/pokemon')
+        assert response.status_code == 503
+        assert 'internal diagnostics' not in response.text
     finally:
         app.dependency_overrides.clear()
 

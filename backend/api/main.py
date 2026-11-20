@@ -29,8 +29,15 @@ async def lifespan(app: FastAPI):
         yield
 
 
-app = FastAPI(title='Pokédex REST API', version='1.0.0', description='Catálogo nacional. Región de origen, generación, filtros combinados y paginación.', lifespan=lifespan)
-app.add_middleware(CORSMiddleware, allow_origins=os.getenv('CORS_ORIGINS', 'http://localhost:5173,http://127.0.0.1:5173').split(','), allow_methods=['GET'], allow_headers=['*'])
+def cors_origins() -> list[str]:
+    origins = [origin.strip() for origin in os.getenv('CORS_ORIGINS', 'http://localhost:5173,http://127.0.0.1:5173').split(',') if origin.strip()]
+    if '*' in origins:
+        raise ValueError('CORS_ORIGINS debe contener orígenes específicos, no *.')
+    return origins
+
+
+app = FastAPI(title='Pokédex REST API', version='1.0.0', description='Catálogo nacional. Región de origen, generación, filtros combinados y paginación.', lifespan=lifespan, debug=False)
+app.add_middleware(CORSMiddleware, allow_origins=cors_origins(), allow_methods=['GET'], allow_headers=['*'])
 
 
 @app.exception_handler(PokemonNotFound)
@@ -40,7 +47,7 @@ async def not_found(request: Request, exc: PokemonNotFound):
 
 @app.exception_handler(PokeAPIUnavailable)
 async def unavailable(request: Request, exc: PokeAPIUnavailable):
-    return JSONResponse(status_code=503, content={'detail': str(exc)}, headers={'Retry-After': '5'})
+    return JSONResponse(status_code=503, content={'detail': 'No se pudo consultar PokéAPI. Inténtalo de nuevo.'}, headers={'Retry-After': '5'})
 
 
 app.include_router(router)
